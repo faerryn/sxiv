@@ -252,8 +252,6 @@ void win_open(win_t *win)
 	sizehints.y = win->y;
 	XSetWMNormalHints(win->env.dpy, win->xwin, &sizehints);
 
-	win->h -= win->bar.h;
-
 	win->buf.w = e->scrw;
 	win->buf.h = e->scrh;
 	win->buf.pm = XCreatePixmap(e->dpy, win->xwin,
@@ -291,7 +289,7 @@ bool win_configure(win_t *win, XConfigureEvent *c)
 	win->x = c->x;
 	win->y = c->y;
 	win->w = c->width;
-	win->h = c->height - win->bar.h;
+	win->h = c->height;
 	win->bw = c->border_width;
 
 	return changed;
@@ -319,11 +317,9 @@ void win_toggle_fullscreen(win_t *win)
 void win_toggle_bar(win_t *win)
 {
 	if (win->bar.h != 0) {
-		win->h += win->bar.h;
 		win->bar.h = 0;
 	} else {
 		win->bar.h = barheight;
-		win->h -= win->bar.h;
 	}
 }
 
@@ -392,28 +388,28 @@ void win_draw_bar(win_t *win)
 		return;
 
 	e = &win->env;
-	y = win->h + font->ascent + V_TEXT_PAD;
+	y = font->ascent + V_TEXT_PAD;
 	w = win->w - 2*H_TEXT_PAD;
 	d = XftDrawCreate(e->dpy, win->buf.pm, DefaultVisual(e->dpy, e->scr),
 	                  DefaultColormap(e->dpy, e->scr));
 
-	XSetForeground(e->dpy, gc, win->fg.pixel);
-	XFillRectangle(e->dpy, win->buf.pm, gc, 0, win->h, win->w, win->bar.h);
-
 	XSetForeground(e->dpy, gc, win->bg.pixel);
-	XSetBackground(e->dpy, gc, win->fg.pixel);
+	XFillRectangle(e->dpy, win->buf.pm, gc, 0, 0, win->w, win->bar.h);
+
+	XSetForeground(e->dpy, gc, win->fg.pixel);
+	XSetBackground(e->dpy, gc, win->bg.pixel);
 
 	if ((len = strlen(r->buf)) > 0) {
 		if ((tw = TEXTWIDTH(win, r->buf, len)) > w)
 			return;
 		x = win->w - tw - H_TEXT_PAD;
 		w -= tw;
-		win_draw_text(win, d, &win->bg, x, y, r->buf, len, tw);
+		win_draw_text(win, d, &win->fg, x, y, r->buf, len, tw);
 	}
 	if ((len = strlen(l->buf)) > 0) {
 		x = H_TEXT_PAD;
 		w -= 2 * H_TEXT_PAD; /* gap between left and right parts */
-		win_draw_text(win, d, &win->bg, x, y, l->buf, len, w);
+		win_draw_text(win, d, &win->fg, x, y, l->buf, len, w);
 	}
 	XftDrawDestroy(d);
 }

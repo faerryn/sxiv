@@ -101,13 +101,16 @@ bool cg_toggle_bar(arg_t _)
 {
 	win_toggle_bar(&win);
 	if (mode == MODE_IMAGE) {
-		if (win.bar.h > 0)
-			open_info();
-		else
+		if (win.bar.h == 0) {
 			close_info();
-		img.checkpan = img.dirty = true;
+			img.dirty = true;
+		} else {
+			open_info();
+		}
 	} else {
-		tns.dirty = true;
+		if (win.bar.h == 0) {
+			tns.dirty = true;
+		}
 	}
 	return true;
 }
